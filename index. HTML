@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PetCare - Sistema de Pet Shop</title>
+    <!-- Tailwind CSS para estilização moderna e responsiva -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons para ícones vetorizados elegantes -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- HEADER / NAVIGATION -->
+    <header class="bg-white border-b border-slate-100 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <!-- Logo -->
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('dashboard')">
+                    <div class="bg-teal-500 text-white p-2 rounded-xl shadow-md shadow-teal-100">
+                        <i data-lucide="paw-print" class="w-6 h-6"></i>
+                    </div>
+                    <span class="text-xl font-bold text-slate-800">Pet<span class="text-teal-500">Care</span></span>
+                </div>
+
+                <!-- Navigation Tabs -->
+                <nav class="hidden md:flex space-x-1 bg-slate-100 p-1 rounded-xl">
+                    <button id="tab-dashboard" onclick="switchTab('dashboard')" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 bg-white text-teal-600 shadow-sm">
+                        <span class="flex items-center space-x-2">
+                            <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                            <span>Dashboard</span>
+                        </span>
+                    </button>
+                    <button id="tab-pets" onclick="switchTab('pets')" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 transition-all duration-200">
+                        <span class="flex items-center space-x-2">
+                            <i data-lucide="dog" class="w-4 h-4"></i>
+                            <span>Nossos Pets</span>
+                        </span>
+                    </button>
+                    <button id="tab-agendamentos" onclick="switchTab('agendamentos')" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 transition-all duration-200">
+                        <span class="flex items-center space-x-2">
+                            <i data-lucide="calendar" class="w-4 h-4"></i>
+                            <span>Agendamentos</span>
+                        </span>
+                    </button>
+                </nav>
+
+                <!-- Mobile Menu Button -->
+                <div class="md:hidden">
+                    <button onclick="toggleMobileMenu()" class="p-2 rounded-lg text-slate-600 hover:bg-slate-100">
+                        <i id="menu-icon" data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation Menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-slate-100 px-4 py-3 space-y-2">
+            <button onclick="switchTab('dashboard'); toggleMobileMenu()" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-700 hover:bg-teal-50 hover:text-teal-600 transition-all">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                <span>Dashboard</span>
+            </button>
+            <button onclick="switchTab('pets'); toggleMobileMenu()" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-700 hover:bg-teal-50 hover:text-teal-600 transition-all">
+                <i data-lucide="dog" class="w-5 h-5"></i>
+                <span>Nossos Pets (CRUD)</span>
+            </button>
+            <button onclick="switchTab('agendamentos'); toggleMobileMenu()" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-700 hover:bg-teal-50 hover:text-teal-600 transition-all">
+                <i data-lucide="calendar" class="w-5 h-5"></i>
+                <span>Agendar Consulta</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- NOTIFICAÇÃO FLUTUANTE (Custom Toast) -->
+        <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-10 opacity-0 transition-all duration-300 pointer-events-none">
+            <div id="toast-bg" class="bg-slate-900 text-white px-5 py-3.5 rounded-xl shadow-xl flex items-center space-x-3">
+                <div id="toast-icon" class="text-teal-400">
+                    <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+                </div>
+                <p id="toast-message" class="text-sm font-medium"></p>
+            </div>
+        </div>
+
+        <!-- ================= DASHBOARD VIEW ================= -->
+        <section id="view-dashboard" class="view-section space-y-8">
+            <!-- Boas vindas -->
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+                <div>
+                    <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Olá, Veterinário(a) & Tutor!</h1>
+                    <p class="text-slate-500 mt-1">Bem-vindo de volta ao painel administrativo do PetCare.</p>
+                </div>
+                <div class="flex space-x-3">
+                    <button onclick="openPetModal()" class="inline-flex items-center space-x-2 bg-teal-500 hover:bg-teal-600 text-white font-semibold px-4  py-2.5 rounded-xl shadow-lg shadow-teal-100 transition-all">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        <span>Novo Pet</span>
+                    </button>
+                    <button onclick="openAgendamentoModal()" class="inline-flex items-center space-x-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold px-4 py-2.5 rounded-xl shadow-lg shadow-amber-100 transition-all">
+                        <i data-lucide="calendar-plus" class="w-4 h-4"></i>
+                        <span>Agendar Visita</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Cards de Métricas -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center space-x-4">
+                    <div class="p-3 bg-teal-50 text-teal-500 rounded-xl">
+                        <i data-lucide="heart" class="w-8 h-8"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-slate-400">Total de Pets</p>
+                        <p id="stat-total-pets" class="text-2xl font-bold text-slate-800">0</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center space-x-4">
+                    <div class="p-3 bg-amber-50 text-amber-500 rounded-xl">
+                        <i data-lucide="clock" class="w-8 h-8"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-slate-400">Próximas Visitas</p>
+                        <p id="stat-proximas" class="text-2xl font-bold text-slate-800">0</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center space-x-4">
+                    <div class="p-3 bg-blue-50 text-blue-500 rounded-xl">
+                        <i data-lucide="sparkles" class="w-8 h-8"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-slate-400">Banhos & Tosast</p>
+                        <p id="stat-estetica" class="text-2xl font-bold text-slate-800">0</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center space-x-4">
+                    <div class="p-3 bg-rose-50 text-rose-500 rounded-xl">
+                        <i data-lucide="stethoscope" class="w-8 h-8"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-slate-400">Consultas Vet</p>
+                        <p id="stat-consultas" class="text-2xl font-bold text-slate-800">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Próximas Atividades do Dia -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Lista de Agendamentos Recentes -->
+                <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-lg font-bold text-slate-800 flex items-center space-x-2">
+                            <i data-lucide="clock-4" class="w-5 h-5 text-teal-500"></i>
+                            <span>Visitas Agendadas para Hoje/Próximas</span>
+                        </h2>
+                        <button onclick="switchTab('agendamentos')" class="text-sm font-semibold text-teal-600 hover:text-teal-700">Ver todas</button>
+                    </div>
+                    <div id="dashboard-agendamentos" class="space-y-3 max-h-[380px] overflow-y-auto pr-1">
+                        <!-- Renderizado via JS -->
+                    </div>
+                </div>
+
+                <!-- Painel Lateral: Pets Recém Chegados -->
+                <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-lg font-bold text-slate-800 flex items-center space-x-2">
+                            <i data-lucide="dog" class="w-5 h-5 text-teal-500"></i>
+                            <span>Pets Recém-chegados</span>
+                        </h2>
+                        <button onclick="switchTab('pets')" class="text-sm font-semibold text-teal-600 hover:text-teal-700">Ver todos</button>
+                    </div>
+                    <div id="dashboard-pets" class="space-y-3">
+                        <!-- Renderizado via JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= PETS VIEW (CRUD) ================= -->
+        <section id="view-pets" class="view-section hidden space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+                <div>
+                    <h1 class="text-2xl font-extrabold text-slate-900">Gerenciamento de Pets</h1>
+                    <p class="text-sm text-slate-500">Cadastre, edite, exclua e filtre seus pets cadastrados.</p>
+                </div>
+                <button onclick="openPetModal()" class="inline-flex items-center space-x-2 bg-teal-500 hover:bg-teal-600 text-white font-semibold px-4 py-2.5 rounded-xl shadow-lg shadow-teal-100 transition-all self-start">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    <span>Cadastrar Pet</span>
+                </button>
+            </div>
+
+            <!-- Filtros de Busca -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="relative">
+                    <i data-lucide="search" class="absolute left-3 top-3 w-5 h-5 text-slate-400"></i>
+                    <input type="text" id="search-pet" oninput="filterPets()" placeholder="Buscar por nome do pet ou tutor..." class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all text-sm">
+                </div>
+                <div>
+                    <select id="filter-especie" onchange="filterPets()" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all text-sm text-slate-600">
+                        <option value="">Todas as Espécies</option>
+                        <option value="Cachorro">Cachorro</option>
+                        <option value="Gato">Gato</option>
+                        <option value="Pássaro">Pássaro</option>
+                        <option value="Roedor">Roedor</option>
+                        <option value="Outro">Outro</option>
+                    </select>
+                </div>
+                <div class="flex items-center justify-end">
+                    <p class="text-xs text-slate-400 font-medium"><span id="pets-count">0</span> pets encontrados</p>
+                </div>
+            </div>
+
+            <!-- Grid de Pets -->
+            <div id="pets-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Renderizado dinamicamente -->
+            </div>
+        </section>
+
+        <!-- ================= AGENDAMENTOS VIEW ================= -->
+        <section id="view-agendamentos" class="view-section hidden space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+                <div>
+                    <h1 class="text-2xl font-extrabold text-slate-900">Agenda de Visitas</h1>
+                    <p class="text-sm text-slate-500">Controle de consultas veterinárias, banhos, tosas e outros procedimentos.</p>
+                </div>
+                <button onclick="openAgendamentoModal()" class="inline-flex items-center space-x-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold px-4 py-2.5 rounded-xl shadow-lg shadow-amber-100 transition-all self-start">
+                    <i data-lucide="calendar-plus" class="w-4 h-4"></i>
+                    <span>Agendar Visita</span>
+                </button>
+            </div>
+
+            <!-- Filtros de Agenda -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-wrap gap-4 items-center justify-between">
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="filterAgendamentos('todos')" id="filter-agenda-todos" class="agenda-filter-btn px-4 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-white transition-all">Todos</button>
+                    <button onclick="filterAgendamentos('Consulta')" id="filter-agenda-consulta" class="agenda-filter-btn px-4 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">Consultas</button>
+                    <button onclick="filterAgendamentos('Banho & Tosa')" id="filter-agenda-banho" class="agenda-filter-btn px-4 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">Banho & Tosa</button>
+                    <button onclick="filterAgendamentos('Exame')" id="filter-agenda-exame" class="agenda-filter-btn px-4 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">Exames</button>
+                    <button onclick="filterAgendamentos('Outros')" id="filter-agenda-outros" class="agenda-filter-btn px-4 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">Outros</button>
+                </div>
+                <div>
+                    <span id="agendamentos-count" class="text-xs text-slate-400 font-medium">0 agendamentos listados</span>
+                </div>
+            </div>
+
+            <!-- Tabela / Lista de Compromissos -->
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-100 text-slate-400 text-xs font-bold uppercase tracking-wider">
+                                <th class="px-6 py-4">Pet / Tutor</th>
+                                <th class="px-6 py-4">Serviço / Tipo</th>
+                                <th class="px-6 py-4">Data & Hora</th>
+                                <th class="px-6 py-4">Status</th>
+                                <th class="px-6 py-4">Anotações</th>
+                                <th class="px-6 py-4 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="agendamentos-table-body" class="divide-y divide-slate-100 text-sm text-slate-600">
+                            <!-- Injetado dinamicamente -->
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Estado vazio -->
+                <div id="agendamentos-empty" class="hidden flex flex-col items-center justify-center p-12 space-y-3">
+                    <div class="p-4 bg-slate-100 rounded-full text-slate-400">
+                        <i data-lucide="calendar-x" class="w-8 h-8"></i>
+                    </div>
+                    <p class="font-semibold text-slate-700">Nenhum agendamento encontrado</p>
+                    <p class="text-xs text-slate-400 max-w-sm text-center">Não existem visitas marcadas para o filtro selecionado ou nenhum pet foi cadastrado ainda.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-white border-t border-slate-100 py-6 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-400">
+            <p>&copy; 2026 PetCare Manager. Todos os direitos reservados. Feito com amor pelos Pets. 🐾</p>
+        </div>
+    </footer>
+
+    <!-- ================= MODAL: CADASTRAR/EDITAR PET ================= -->
+    <div id="modal-pet" class="fixed inset-0 z-50 overflow-y-auto hidden">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <!-- Overlay -->
+            <div onclick="closePetModal()" class="fixed inset-0 transition-opacity bg-slate-900/40 backdrop-blur-sm"></div>
+
+            <!-- Elemento para centralizar no browser -->
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+
+            <!-- Conteúdo do Modal -->
+            <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-teal-50 px-6 py-4 flex justify-between items-center border-b border-teal-100">
+                    <h3 id="modal-pet-title" class="text-lg font-bold text-teal-950 flex items-center space-x-2">
+                        <i data-lucide="paw-print" class="w-5 h-5 text-teal-600"></i>
+                        <span>Cadastrar Novo Pet</span>
+                    </h3>
+                    <button onclick="closePetModal()" class="text-teal-900 hover:bg-teal-100 p-1.5 rounded-lg transition-all">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <form id="form-pet" onsubmit="savePet(event)" class="p-6 space-y-4">
+                    <input type="hidden" id="pet-id">
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="col-span-2">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Nome do Pet*</label>
+                            <input type="text" id="pet-nome" required placeholder="Ex: Thor, Pipoca..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all text-sm">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Espécie*</label>
+                            <select id="pet-especie" required onchange="handleEspecieChange()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all text-sm text-slate-600">
+                                <option value="Cachorro">Cachorro</option>
+                                <option value="Gato">Gato</option>
+                                <option value="Pássaro">Pássaro</option>
+                                <option value="Roedor">Roedor</option>
+                                <option value="Outro">Outro</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Raça</label>
+                            <input type="text" id="pet-raca" placeholder="Ex: Golden, Siamês..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all text-sm">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Idade (anos)*</label>
+                            <input type="number" id="pet-idade" min="0" max="40" required placeholder="Ex: 3" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all text-sm">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Peso (kg)*</label>
+                            <input type="number" id="pet-peso" step="0.1" min="0" required placeholder="Ex: 8.5" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all text-sm">
+                        </div>
+
+                        <div class="col-span-2">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Nome do Tutor*</label>
+                            <input type="text" id="pet-tutor" required placeholder="Ex: Mariana Silva" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all text-sm">
+                        </div>
+
+                        <div class="col-span-2">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Contato do Tutor (Telefone)*</label>
+                            <input type="tel" id="pet-contato" required placeholder="Ex: (82) 99999-9999" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all text-sm">
+                        </div>
+
+                        <div class="col-span-2">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Observações Médicas ou Cuidados</label>
+                            <textarea id="pet-obs" rows="3" placeholder="Alergias, restrições alimentares, vacinas atrasadas..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all text-sm resize-none"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end space-x-3 pt-4 border-t border-slate-100">
+                        <button type="button" onclick="closePetModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold rounded-xl text-sm transition-all">Cancelar</button>
+                        <button type="submit" class="px-5 py-2 bg-teal-500 hover:bg-teal-600 text-white font-semibold rounded-xl text-sm shadow-md shadow-teal-100 transition-all">Salvar Pet</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL: AGENDAR VISITA / CONSULTA ================= -->
+    <div id="modal-agendamento" class="fixed inset-0 z-50 overflow-y-auto hidden">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <!-- Overlay -->
+            <div onclick="closeAgendamentoModal()" class="fixed inset-0 transition-opacity bg-slate-900/40 backdrop-blur-sm"></div>
+
+            <!-- Elemento para centralizar no browser -->
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+
+            <!-- Conteúdo do Modal -->
+            <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-amber-50 px-6 py-4 flex justify-between items-center border-b border-amber-100">
+                    <h3 class="text-lg font-bold text-amber-950 flex items-center space-x-2">
+                        <i data-lucide="calendar" class="w-5 h-5 text-amber-600"></i>
+                        <span>Agendar Visita</span>
+                    </h3>
+                    <button onclick="closeAgendamentoModal()" class="text-amber-900 hover:bg-amber-100 p-1.5 rounded-lg transition-all">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <form id="form-agendamento" onsubmit="saveAgendamento(event)" class="p-6 space-y-4">
+                    
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Selecione o Pet*</label>
+                        <select id="agenda-pet-id" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all text-sm text-slate-600">
+                            <!-- Injetado dinamicamente via JS (lista de pets cadastrados) -->
+                        </select>
+                        <p class="text-xs text-slate-400 mt-1">O pet precisa estar cadastrado primeiro.</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="col-span-2">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Tipo de Serviço*</label>
+                            <select id="agenda-servico" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all text-sm text-slate-600">
+                                <option value="Consulta">Consulta Veterinária</option>
+                                <option value="Banho & Tosa">Banho & Tosa</option>
+                                <option value="Exame">Coleta de Exames</option>
+                                <option value="Outros">Outros Procedimentos</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Data*</label>
+                            <input type="date" id="agenda-data" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all text-sm">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Horário*</label>
+                            <input type="time" id="agenda-hora" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all text-sm">
+                        </div>
+
+                        <div class="col-span-2">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Notas do Agendamento / Sintomas</label>
+                            <textarea id="agenda-notas" rows="3" placeholder="Informações adicionais para a visita..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all text-sm resize-none"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end space-x-3 pt-4 border-t border-slate-100">
+                        <button type="button" onclick="closeAgendamentoModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold rounded-xl text-sm transition-all">Cancelar</button>
+                        <button type="submit" class="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-xl text-sm shadow-md shadow-amber-100 transition-all">Confirmar Agendamento</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ================= JAVASCRIPT: LÓGICA DO APP ================= -->
+    <script>
+        // BANCO DE DADOS EM MEMÓRIA / LOCAL STORAGE
+        let pets = JSON.parse(localStorage.getItem('petshop_pets')) || [];
+        let agendamentos = JSON.parse(localStorage.getItem('petshop_agendamentos')) || [];
+
+        // Dados Iniciais Fictícios (Caso a lista esteja vazia)
+        if (pets.length === 0) {
+            pets = [
+                { id: "1", nome: "Max", especie: "Cachorro", raca: "Golden Retriever", idade: 3, peso: 32.5, tutor: "Ana Clara", contato: "(82) 98888-1111", obs: "Muito dócil. Alérgico a corantes de ração vermelha." },
+                { id: "2", nome: "Mel", especie: "Gato", raca: "Persa", idade: 2, peso: 4.1, tutor: "Carlos Eduardo", contato: "(82) 99111-2222", obs: "Fica assustada com barulho de secador de cabelo." },
+                { id: "3", nome: "Bidu", especie: "Cachorro", raca: "Poodle", idade: 7, peso: 6.8, tutor: "Juliana Santos", contato: "(82) 99333-3333", obs: "Cardiopata, tomar cuidado ao manusear no banho." }
+            ];
+            agendamentos = [
+                { id: "101", petId: "1", servico: "Banho & Tosa", data: "2026-07-15", hora: "09:00", notas: "Tosa higiênica e perfume suave.", concluido: false },
+                { id: "102", petId: "2", servico: "Consulta", data: "2026-07-16", hora: "14:30", notas: "Check-up anual e vacinação tríplice felina.", concluido: false }
+            ];
+            salvarDados();
+        }
+
+        // INICIALIZAÇÃO
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            atualizarDashboard();
+            renderPetsGrid();
+            renderAgendamentos();
+            preencherSelectPets();
+        });
+
+        // PERSISTÊNCIA
+        function salvarDados() {
+            localStorage.setItem('petshop_pets', JSON.stringify(pets));
+            localStorage.setItem('petshop_agendamentos', JSON.stringify(agendamentos));
+        }
+
+        // CONTROLE DE TOASTS (Notificações)
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastBg = document.getElementById('toast-bg');
+            const toastMsg = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
+
+            toastMsg.innerText = message;
+
+            if (type === 'success') {
+                toastBg.className = "bg-emerald-950 text-emerald-100 px-5 py-3.5 rounded-2xl shadow-xl flex items-center space-x-3 border border-emerald-500/20";
+                toastIcon.innerHTML = `<i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400"></i>`;
+            } else if (type === 'error') {
+                toastBg.className = "bg-rose-950 text-rose-100 px-5 py-3.5 rounded-2xl shadow-xl flex items-center space-x-3 border border-rose-500/20";
+                toastIcon.innerHTML = `<i data-lucide="alert-triangle" class="w-5 h-5 text-rose-400"></i>`;
+            } else {
+                toastBg.className = "bg-slate-900 text-slate-100 px-5 py-3.5 rounded-2xl shadow-xl flex items-center space-x-3";
+                toastIcon.innerHTML = `<i data-lucide="info" class="w-5 h-5 text-teal-400"></i>`;
+            }
+
+            lucide.createIcons();
+
+            // Animação entrada
+            toast.classList.remove('translate-y-10', 'opacity-0', 'pointer-events-none');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                // Animação saída
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-10', 'opacity-0', 'pointer-events-none');
+            }, 3500);
+        }
+
+        // NAVEGAÇÃO DE TABS
+        function switchTab(tabId) {
+            // Esconder todas as seções
+            document.querySelectorAll('.view-section').forEach(section => {
+                section.classList.add('hidden');
+            });
+
+            // Mostrar a selecionada
+            const targetSection = document.getElementById(`view-${tabId}`);
+            if (targetSection) {
+                targetSection.classList.remove('hidden');
+            }
+
+            // Atualizar classes dos botões do menu desktop
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = "tab-btn px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 transition-all duration-200";
+            });
+
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            if (activeBtn) {
+                if (tabId === 'dashboard') {
+                    activeBtn.className = "tab-btn px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 bg-white text-teal-600 shadow-sm";
+                } else if (tabId === 'pets') {
+                    activeBtn.className = "tab-btn px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 bg-white text-teal-600 shadow-sm";
+                } else {
+                    activeBtn.className = "tab-btn px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 bg-white text-amber-600 shadow-sm";
+                }
+            }
+
+            // Ações específicas por tab
+            if (tabId === 'dashboard') {
+                atualizarDashboard();
+            } else if (tabId === 'pets') {
+                renderPetsGrid();
+            } else if (tabId === 'agendamentos') {
+                renderAgendamentos();
+            }
+        }
+
+        // MOBILE MENU TOGGLE
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            const icon = document.getElementById('menu-icon');
+            if (menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden');
+                icon.setAttribute('data-lucide', 'x');
+            } else {
+                menu.classList.add('hidden');
+                icon.setAttribute('data-lucide', 'menu');
+            }
+            lucide.createIcons();
+        }
+
+        // ================= LÓGICA DO DASHBOARD =================
+        function atualizarDashboard() {
+            // Contadores
+            document.getElementById('stat-total-pets').innerText = pets.length;
+            
+            const proximas = agendamentos.filter(a => !a.concluido).length;
+            document.getElementById('stat-proximas').innerText = proximas;
+
+            const estetica = agendamentos.filter(a => a.servico === 'Banho & Tosa' && !a.concluido).length;
+            document.getElementById('stat-estetica').innerText = estetica;
+
+            const consultas = agendamentos.filter(a => a.servico === 'Consulta' && !a.concluido).length;
+            document.getElementById('stat-consultas').innerText = consultas;
+
+            // Renderizar Próximas Atividades no Dashboard
+            const dashboardAgendamentosDiv = document.getElementById('dashboard-agendamentos');
+            dashboardAgendamentosDiv.innerHTML = '';
+
+            const proximosAgendamentos = [...agendamentos]
+                .filter(a => !a.concluido)
+                .sort((a, b) => new Date(`${a.data}T${a.hora}`) - new Date(`${b.data}T${b.hora}`))
+                .slice(0, 5);
+
+            if (proximosAgendamentos.length === 0) {
+                dashboardAgendamentosDiv.innerHTML = `
+                    <div class="text-center py-8 text-slate-400">
+                        <p class="text-sm">Não há compromissos pendentes.</p>
+                    </div>
+                `;
+            } else {
+                proximosAgendamentos.forEach(a => {
+                    const pet = pets.find(p => p.id === a.petId) || { nome: "Pet Desconhecido", tutor: "N/A" };
+                    const servicoClass = a.servico === 'Consulta' ? 'bg-rose-50 text-rose-700' :
+                                         a.servico === 'Banho & Tosa' ? 'bg-blue-50 text-blue-700' :
+                                         a.servico === 'Exame' ? 'bg-purple-50 text-purple-700' : 'bg-slate-100 text-slate-700';
+
+                    const dataFormatada = new Date(a.data + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+
+                    dashboardAgendamentosDiv.innerHTML += `
+                        <div class="flex items-center justify-between p-3.5 hover:bg-slate-50 rounded-xl border border-slate-100 transition-all">
+                            <div class="flex items-center space-x-3">
+                                <div class="bg-teal-50 text-teal-600 p-2.5 rounded-xl text-xs font-bold">
+                                    🐾
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-800 text-sm">${pet.nome} <span class="text-xs text-slate-400 font-normal">(${pet.especie})</span></h4>
+                                    <p class="text-xs text-slate-500">Tutor(a): ${pet.tutor}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <span class="px-2.5 py-1 rounded-lg text-xs font-bold ${servicoClass}">${a.servico}</span>
+                                <div class="text-right">
+                                    <p class="text-xs font-semibold text-slate-700">${dataFormatada}</p>
+                                    <p class="text-[10px] text-slate-400 font-medium">${a.hora}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            // Renderizar Recém-Chegados
+            const dashboardPetsDiv = document.getElementById('dashboard-pets');
+            dashboardPetsDiv.innerHTML = '';
+
+            const recemChegados = [...pets].slice(-4).reverse();
+
+            if (recemChegados.length === 0) {
+                dashboardPetsDiv.innerHTML = `
+                    <div class="text-center py-8 text-slate-400">
+                        <p class="text-sm">Nenhum pet cadastrado.</p>
+                    </div>
+                `;
+            } else {
+                recemChegados.forEach(pet => {
+                    const avatar = pet.especie === 'Cachorro' ? '🐶' :
+                                   pet.especie === 'Gato' ? '🐱' :
+                                   pet.especie === 'Pássaro' ? '🦜' : '🐹';
+
+                    dashboardPetsDiv.innerHTML += `
+                        <div class="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-all border border-slate-50">
+                            <div class="flex items-center space-x-3">
+                                <div class="text-2xl">${avatar}</div>
+                                <div>
+                                    <p class="text-sm font-bold text-slate-800">${pet.nome}</p>
+                                    <p class="text-xs text-slate-400">${pet.raca || pet.especie}</p>
+                                </div>
+                            </div>
+                            <button onclick="editPet('${pet.id}')" class="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-all">
+                                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    `;
+                });
+            }
+            lucide.createIcons();
+        }
+
+        // ================= CRUD: PETS =================
+
+        // Abrir Modal
+        function openPetModal() {
+            document.getElementById('form-pet').reset();
+            document.getElementById('pet-id').value = '';
+            document.getElementById('modal-pet-title').innerHTML = `
+                <i data-lucide="paw-print" class="w-5 h-5 text-teal-600"></i>
+                <span>Cadastrar Novo Pet</span>
+            `;
+            document.getElementById('modal-pet').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closePetModal() {
+            document.getElementById('modal-pet').classList.add('hidden');
+        }
+
+        // Salvar/Editar Pet (Create & Update)
+        function savePet(event) {
+            event.preventDefault();
+
+            const id = document.getElementById('pet-id').value;
+            const nome = document.getElementById('pet-nome').value.trim();
+            const especie = document.getElementById('pet-especie').value;
+            const raca = document.getElementById('pet-raca').value.trim() || 'S/R';
+            const idade = parseInt(document.getElementById('pet-idade').value);
+            const peso = parseFloat(document.getElementById('pet-peso').value);
+            const tutor = document.getElementById('pet-tutor').value.trim();
+            const contato = document.getElementById('pet-contato').value.trim();
+            const obs = document.getElementById('pet-obs').value.trim();
+
+            if (!nome || !tutor || !contato) {
+                showToast("Por favor preencha todos os campos obrigatórios.", "error");
+                return;
+            }
+
+            if (id) {
+                // Modo Edição
+                const index = pets.findIndex(p => p.id === id);
+                if (index !== -1) {
+                    pets[index] = { id, nome, especie, raca, idade, peso, tutor, contato, obs };
+                    showToast(`${nome} foi atualizado com sucesso!`);
+                }
+            } else {
+                // Novo Cadastro
+                const novoPet = {
+                    id: Date.now().toString(),
+                    nome, especie, raca, idade, peso, tutor, contato, obs
+                };
+                pets.push(novoPet);
+                showToast(`${nome} cadastrado com sucesso!`);
+            }
+
+            salvarDados();
+            closePetModal();
+            renderPetsGrid();
+            preencherSelectPets();
+            atualizarDashboard();
+        }
+
+        // Carregar Pet no Form para Editar
+        function editPet(id) {
+            const pet = pets.find(p => p.id === id);
+            if (!pet) return;
+
+            // Mudar para visualização correta caso esteja no dashboard
+            switchTab('pets');
+
+            document.getElementById('pet-id').value = pet.id;
+            document.getElementById('pet-nome').value = pet.nome;
+            document.getElementById('pet-especie').value = pet.especie;
+            document.getElementById('pet-raca').value = pet.raca;
+            document.getElementById('pet-idade').value = pet.idade;
+            document.getElementById('pet-peso').value = pet.peso;
+            document.getElementById('pet-tutor').value = pet.tutor;
+            document.getElementById('pet-contato').value = pet.contato;
+            document.getElementById('pet-obs').value = pet.obs;
+
+            document.getElementById('modal-pet-title').innerHTML = `
+                <i data-lucide="edit-3" class="w-5 h-5 text-teal-600"></i>
+                <span>Editar Pet: ${pet.nome}</span>
+            `;
+
+            document.getElementById('modal-pet').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        // Deletar Pet (Delete)
+        function deletePet(id) {
+            const pet = pets.find(p => p.id === id);
+            if (!pet) return;
+
+            // Verificar se há agendamentos pendentes antes de deletar
+            const temAgendamento = agendamentos.some(a => a.petId === id && !a.concluido);
+            
+            let confirmacaoMsg = `Deseja realmente remover o(a) pet ${pet.nome}?`;
+            if (temAgendamento) {
+                confirmacaoMsg += "\n\nAtenção: Este pet possui agendamentos ativos na agenda que também serão afetados.";
+            }
+
+            // Criado um modal de confirmação nativo seguro ou confirm comum (usando confirm que é suportado na maioria dos navegadores)
+            if (confirm(confirmacaoMsg)) {
+                pets = pets.filter(p => p.id !== id);
+                // Remover agendamentos deste pet
+                agendamentos = agendamentos.filter(a => a.petId !== id);
+                
+                salvarDados();
+                showToast(`${pet.nome} foi removido com sucesso.`);
+                renderPetsGrid();
+                preencherSelectPets();
+                atualizarDashboard();
+            }
+        }
+
+        // Renderizar Grid de Pets com Filtros aplicados
+        function renderPetsGrid() {
+            const grid = document.getElementById('pets-grid');
+            const searchVal = document.getElementById('search-pet').value.toLowerCase();
+            const especieVal = document.getElementById('filter-especie').value;
+
+            grid.innerHTML = '';
+
+            const filtered = pets.filter(p => {
+                const matchesSearch = p.nome.toLowerCase().includes(searchVal) || p.tutor.toLowerCase().includes(searchVal);
+                const matchesEspecie = especieVal === '' || p.especie === especieVal;
+                return matchesSearch && matchesEspecie;
+            });
+
+            document.getElementById('pets-count').innerText = filtered.length;
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full bg-white rounded-2xl border border-slate-100 p-12 text-center flex flex-col items-center justify-center space-y-3">
+                        <div class="p-3 bg-slate-50 text-slate-400 rounded-full">
+                            <i data-lucide="frown" class="w-8 h-8"></i>
+                        </div>
+                        <p class="font-bold text-slate-700">Nenhum pet encontrado</p>
+                        <p class="text-xs text-slate-400">Verifique os filtros ou adicione um novo pet para começar.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            filtered.forEach(p => {
+                const emoji = p.especie === 'Cachorro' ? '🐶' :
+                              p.especie === 'Gato' ? '🐱' :
+                              p.especie === 'Pássaro' ? '🦜' : '🐹';
+
+                grid.innerHTML += `
+                    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-teal-500/20 transition-all overflow-hidden flex flex-col justify-between">
+                        <!-- Card Header -->
+                        <div class="p-5 space-y-4">
+                            <div class="flex justify-between items-start">
+                                <div class="flex items-center space-x-3">
+                                    <div class="text-3xl bg-slate-50 p-2.5 rounded-xl border border-slate-100">${emoji}</div>
+                                    <div>
+                                        <h3 class="font-bold text-slate-800 text-lg">${p.nome}</h3>
+                                        <p class="text-xs text-slate-400">${p.raca}</p>
+                                    </div>
+                                </div>
+                                <span class="bg-teal-50 text-teal-700 text-[11px] font-bold px-2.5 py-1 rounded-full uppercase">${p.especie}</span>
+                            </div>
+
+                            <!-- Especificações Técnicas -->
+                            <div class="grid grid-cols-2 gap-2 bg-slate-50 p-2.5 rounded-xl text-xs text-slate-600">
+                                <div>
+                                    <span class="text-slate-400 block text-[10px] uppercase font-bold">Idade</span>
+                                    <strong>${p.idade} ${p.idade === 1 ? 'ano' : 'anos'}</strong>
+                                </div>
+                                <div>
+                                    <span class="text-slate-400 block text-[10px] uppercase font-bold">Peso</span>
+                                    <strong>${p.peso} kg</strong>
+                                </div>
+                            </div>
+
+                            <!-- Informações do Tutor -->
+                            <div class="pt-2 border-t border-slate-100 space-y-1 text-xs">
+                                <p class="text-slate-600"><span class="text-slate-400 font-medium">Tutor(a):</span> <strong class="text-slate-700">${p.tutor}</strong></p>
+                                <p class="text-slate-600 flex items-center space-x-1">
+                                    <span class="text-slate-400 font-medium">Contato:</span> 
+                                    <strong class="text-slate-700 flex items-center">
+                                        <i data-lucide="phone" class="w-3 h-3 text-slate-400 mr-1"></i>
+                                        ${p.contato}
+                                    </strong>
+                                </p>
+                            </div>
+
+                            <!-- Observações -->
+                            ${p.obs ? `
+                            <div class="bg-amber-50/50 border border-amber-100/50 p-2.5 rounded-xl text-xs text-amber-900">
+                                <p class="line-clamp-2"><span class="font-bold">Obs:</span> ${p.obs}</p>
+                            </div>
+                            ` : ''}
+                        </div>
+
+                        <!-- Card Footer / Actions -->
+                        <div class="bg-slate-50/50 px-5 py-3 border-t border-slate-100 flex justify-between items-center">
+                            <button onclick="agendarDireto('${p.id}')" class="text-xs font-bold text-teal-600 hover:text-teal-700 flex items-center space-x-1">
+                                <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i>
+                                <span>Agendar visita</span>
+                            </button>
+                            <div class="flex space-x-2">
+                                <button onclick="editPet('${p.id}')" class="p-1.5 hover:bg-teal-50 text-slate-500 hover:text-teal-600 rounded-lg transition-all" title="Editar dados">
+                                    <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                </button>
+                                <button onclick="deletePet('${p.id}')" class="p-1.5 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-lg transition-all" title="Excluir pet">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            lucide.createIcons();
+        }
+
+        // Filtro em tempo real no KeyUp / Input
+        function filterPets() {
+            renderPetsGrid();
+        }
+
+        // Tratamento simples para auxiliar espécies
+        function handleEspecieChange() {
+            const especie = document.getElementById('pet-especie').value;
+            const racaInput = document.getElementById('pet-raca');
+            if (especie === 'Outro') {
+                racaInput.placeholder = "Indique qual animal e raça";
+            } else {
+                racaInput.placeholder = "Ex: Golden, Siamês...";
+            }
+        }
+
+
+        // ================= AGENDAMENTOS / CONSULTAS =================
+
+        // Preencher Dropdown de Pets no formulário de agendamento
+        function preencherSelectPets() {
+            const select = document.getElementById('agenda-pet-id');
+            select.innerHTML = '';
+
+            if (pets.length === 0) {
+                select.innerHTML = '<option value="">Nenhum pet cadastrado no sistema</option>';
+                return;
+            }
+
+            pets.forEach(p => {
+                select.innerHTML += `<option value="${p.id}">${p.nome} (Tutor: ${p.tutor})</option>`;
+            });
+        }
+
+        // Abrir Modal de Agendamento
+        function openAgendamentoModal() {
+            if (pets.length === 0) {
+                showToast("Para agendar uma visita, cadastre ao menos um pet primeiro.", "error");
+                switchTab('pets');
+                openPetModal();
+                return;
+            }
+            document.getElementById('form-agendamento').reset();
+            
+            // Setar data mínima como hoje
+            const hoje = new Date().toISOString().split('T')[0];
+            document.getElementById('agenda-data').min = hoje;
+            document.getElementById('agenda-data').value = hoje;
+
+            // Setar hora aproximada próxima hora redonda
+            const agora = new Date();
+            agora.setHours(agora.getHours() + 1);
+            const horaPadrao = agora.toISOString().split('T')[1].substring(0, 5);
+            document.getElementById('agenda-hora').value = horaPadrao;
+
+            document.getElementById('modal-agendamento').classList.remove('hidden');
+        }
+
+        function closeAgendamentoModal() {
+            document.getElementById('modal-agendamento').classList.add('hidden');
+        }
+
+        // Agendar de dentro do Card do Pet Diretamente
+        function agendarDireto(petId) {
+            openAgendamentoModal();
+            document.getElementById('agenda-pet-id').value = petId;
+        }
+
+        // Confirmar Agendamento (Save)
+        function saveAgendamento(event) {
+            event.preventDefault();
+
+            const petId = document.getElementById('agenda-pet-id').value;
+            const servico = document.getElementById('agenda-servico').value;
+            const data = document.getElementById('agenda-data').value;
+            const hora = document.getElementById('agenda-hora').value;
+            const notas = document.getElementById('agenda-notas').value.trim();
+
+            if (!petId) {
+                showToast("Selecione um pet válido cadastrado.", "error");
+                return;
+            }
+
+            const novoAgendamento = {
+                id: Date.now().toString(),
+                petId, servico, data, hora, notas,
+                concluido: false
+            };
+
+            agendamentos.push(novoAgendamento);
+            salvarDados();
+            closeAgendamentoModal();
+            renderAgendamentos();
+            atualizarDashboard();
+            
+            // Mensagem de sucesso estilizada com nome do pet
+            const pet = pets.find(p => p.id === petId);
+            showToast(`Visita de ${pet.nome} agendada para dia ${new Date(data + 'T00:00:00').toLocaleDateString('pt-BR')}!`);
+        }
+
+        // Filtros Ativos de Agendamentos
+        let filtroServicoAtual = 'todos';
+
+        function filterAgendamentos(filtro) {
+            filtroServicoAtual = filtro;
+            
+            // Atualizar botões visuais
+            document.querySelectorAll('.agenda-filter-btn').forEach(btn => {
+                btn.className = "agenda-filter-btn px-4 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all";
+            });
+
+            const idsBotoes = {
+                'todos': 'filter-agenda-todos',
+                'Consulta': 'filter-agenda-consulta',
+                'Banho & Tosa': 'filter-agenda-banho',
+                'Exame': 'filter-agenda-exame',
+                'Outros': 'filter-agenda-outros'
+            };
+
+            document.getElementById(idsBotoes[filtro]).className = "agenda-filter-btn px-4 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-white transition-all";
+
+            renderAgendamentos();
+        }
+
+        // Renderizar Agendamentos
+        function renderAgendamentos() {
+            const tbody = document.getElementById('agendamentos-table-body');
+            const emptyState = document.getElementById('agendamentos-empty');
+            tbody.innerHTML = '';
+
+            const filtrados = agendamentos.filter(a => {
+                if (filtroServicoAtual === 'todos') return true;
+                return a.servico === filtroServicoAtual;
+            }).sort((a, b) => {
+                // Ordenar por data & hora
+                const dataA = new Date(`${a.data}T${a.hora}`);
+                const dataB = new Date(`${b.data}T${b.hora}`);
+                return dataA - dataB;
+            });
+
+            document.getElementById('agendamentos-count').innerText = `${filtrados.length} compromissos agendados`;
+
+            if (filtrados.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            filtrados.forEach(a => {
+                const pet = pets.find(p => p.id === a.petId) || { nome: "Pet Desconhecido", tutor: "Desconhecido", contato: "S/N" };
+                const dataFormatada = new Date(a.data + 'T00:00:00').toLocaleDateString('pt-BR');
+                
+                const statusBadge = a.concluido 
+                    ? `<span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
+                        <i data-lucide="check" class="w-3 h-3 mr-1"></i> Concluído
+                       </span>` 
+                    : `<span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-amber-50 text-amber-700 border border-amber-100">
+                        <i data-lucide="clock" class="w-3 h-3 mr-1"></i> Agendado
+                       </span>`;
+
+                const servicoClass = a.servico === 'Consulta' ? 'bg-rose-50 text-rose-700 font-semibold' :
+                                     a.servico === 'Banho & Tosa' ? 'bg-blue-50 text-blue-700 font-semibold' :
+                                     a.servico === 'Exame' ? 'bg-purple-50 text-purple-700 font-semibold' : 'bg-slate-100 text-slate-700';
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition-all ${a.concluido ? 'opacity-60' : ''}">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center space-x-3">
+                                <div>
+                                    <p class="font-bold text-slate-800">${pet.nome}</p>
+                                    <p class="text-xs text-slate-400">Tutor: ${pet.tutor}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="px-2.5 py-1 rounded-lg text-xs ${servicoClass}">${a.servico}</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div>
+                                <p class="font-medium text-slate-700">${dataFormatada}</p>
+                                <p class="text-xs text-slate-400">${a.hora}</p>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            ${statusBadge}
+                        </td>
+                        <td class="px-6 py-4 max-w-xs truncate" title="${a.notas || 'Sem anotações.'}">
+                            <span class="text-xs italic">${a.notas || 'Sem notas adicionais'}</span>
+                        </td>
+                        <td class="px-6 py-4 text-right space-x-2">
+                            ${!a.concluido ? `
+                                <button onclick="completarAgendamento('${a.id}')" class="inline-flex items-center text-xs bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold px-2.5 py-1.5 rounded-lg transition-all" title="Marcar como realizado">
+                                    <i data-lucide="check" class="w-3.5 h-3.5 mr-1"></i> Concluir
+                                </button>
+                            ` : ''}
+                            <button onclick="removerAgendamento('${a.id}')" class="text-rose-500 hover:text-rose-700 p-1.5 rounded-lg hover:bg-rose-50 transition-all inline-flex items-center" title="Remover visita">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            lucide.createIcons();
+        }
+
+        // Marcar Agendamento como realizado
+        function completarAgendamento(id) {
+            const index = agendamentos.findIndex(a => a.id === id);
+            if (index !== -1) {
+                agendamentos[index].concluido = true;
+                salvarDados();
+                showToast("Visita marcada como realizada!");
+                renderAgendamentos();
+                atualizarDashboard();
+            }
+        }
+
+        // Excluir Agendamento
+        function removerAgendamento(id) {
+            if (confirm("Deseja realmente cancelar este agendamento?")) {
+                agendamentos = agendamentos.filter(a => a.id !== id);
+                salvarDados();
+                showToast("Agendamento cancelado com sucesso.", "error");
+                renderAgendamentos();
+                atualizarDashboard();
+            }
+        }
+    </script>
+</body>
+</html>
